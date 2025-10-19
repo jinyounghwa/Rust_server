@@ -4,3 +4,18 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# On Windows
+# ```
+# cargo install -f cargo-binutils
+# rustup component add llvm-tools-preview
+# ```
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "link-arg=/ENTRY:mainCRTStartup"]
+
+## On maxOS, `brew install michaeleisel/zid/zid`
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "link-arg=-fuse-Id=/usr/local/bin/zid"]
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-arg=-fuse-Id=/usr/local/bin/zid"]
+
+# ```
