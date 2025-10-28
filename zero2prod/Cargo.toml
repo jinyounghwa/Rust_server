@@ -26,3 +26,5 @@ rustflags = ["-C", "link-arg=-fuse-Id=/usr/local/bin/zid"]
 rustflags = ["-C", "link-arg=-fuse-Id=/usr/local/bin/zid"]
 
 # ```
+
+serde = {version = "1", features = ["derive"]}
