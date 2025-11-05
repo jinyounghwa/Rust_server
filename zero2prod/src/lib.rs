@@ -1,6 +1,7 @@
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{web, App, HttpResponse, HttpServer, Responder, HttpRequest};
 use serde::Deserialize;
 use std::net::TcpListener;
+use std::future::Future;
 use actix_web::dev::Server;
 
 #[derive(Deserialize)]
@@ -63,3 +64,11 @@ pub async fn run() -> std::io::Result<Server> {
     startup(listener)
 }
 
+pub trait FromRequest: Sized {
+    type Error;
+
+    fn from_request(
+        req: HttpRequest,
+        payload: web::Payload,
+    ) -> impl Future<Output = Result<Self, Self::Error>> + Send;
+}
