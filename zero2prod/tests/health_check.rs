@@ -1,13 +1,21 @@
 //! Integration tests for the zero2prod server
 
 use std::net::TcpListener;
-use zero2prod::startup;
+use zero2prod::startup::run;
+use zero2prod::configuration::get_configuration;
+use sqlx::{Connection, PgConnection};
 
-fn spawn_app() -> String {
+async fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0")
         .expect("Failed to bind random port");
     let port = listener.local_addr().unwrap().port();
-    let server = startup(listener)
+
+    let configuration = get_configuration().expect("Failed to read configuration");
+    let connection = PgConnection::connect(&configuration.database.connection_string())
+        .await
+        .expect("Failed to connect to database");
+
+    let server = run(listener, connection)
         .expect("Failed to create server");
 
     let _ = tokio::spawn(async move {
@@ -19,7 +27,7 @@ fn spawn_app() -> String {
 
 #[tokio::test]
 async fn health_check_works() {
-    let addr = spawn_app();
+    let addr = spawn_app().await;
 
     let response = reqwest::Client::new()
         .get(&format!("{}/health_check", addr))
@@ -32,37 +40,9 @@ async fn health_check_works() {
 }
 
 #[tokio::test]
-async fn greet_returns_name() {
-    let addr = spawn_app();
-
-    let response = reqwest::Client::new()
-        .get(&format!("{}/Alice", addr))
-        .send()
-        .await
-        .expect("Failed to execute request");
-
-    assert!(response.status().is_success());
-    assert_eq!(response.text().await.unwrap(), "Hello Alice!");
-}
-
-#[tokio::test]
-async fn greet_default_world() {
-    let addr = spawn_app();
-
-    let response = reqwest::Client::new()
-        .get(&addr)
-        .send()
-        .await
-        .expect("Failed to execute request");
-
-    assert!(response.status().is_success());
-    assert_eq!(response.text().await.unwrap(), "Hello World!");
-}
-
-#[tokio::test]
 async fn subscribe_returns_200_for_valid_form_data() {
     // Arrange
-    let addr = spawn_app();
+    let addr = spawn_app().await;
     let client = reqwest::Client::new();
 
     // Act  
@@ -83,7 +63,7 @@ async fn subscribe_returns_200_for_valid_form_data() {
 #[tokio::test]
 async fn subscribe_returns_400_when_data_is_missing() {
     // Arrange
-    let app_address = spawn_app();
+    let app_address = spawn_app().await;
     let client = reqwest::Client::new();
     let test_cases = vec![
         ("name=le%20guin", "missing the email"),

@@ -4,7 +4,16 @@
       "Bash(cargo build:*)",
       "Bash(cargo check:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(cargo run:*)"
+      "Bash(cargo run:*)",
+      "Bash(find:*)",
+      "Bash(docker --version:*)",
+      "Bash(docker run:*)",
+      "Bash(docker rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(cargo install:*)",
+      "Bash(docker exec:*)",
+      "Bash(del \"C:\\Users\\user\\Documents\\Rust_server\\zero2prod\\src\\lib copy.rs\")",
+      "Bash(cargo test:*)"
     ],
     "deny": [],
     "ask": []
