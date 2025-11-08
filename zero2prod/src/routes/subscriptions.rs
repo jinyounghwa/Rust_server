@@ -1,5 +1,6 @@
 use actix_web::{web, HttpResponse};
 use serde::Deserialize;
+use sqlx::PgPool;
 
 #[derive(Deserialize)]
 pub struct FormData {
@@ -13,7 +14,10 @@ fn is_valid_email(email: &str) -> bool {
     !trimmed.is_empty() && trimmed.contains('@') && trimmed.len() > 5
 }
 
-pub async fn subscribe(form: web::Form<FormData>) -> HttpResponse {
+pub async fn subscribe(
+    form: web::Form<FormData>,
+    _pool: web::Data<PgPool>,
+) -> HttpResponse {
     // Name validation: check if not empty after trimming
     let name_valid = form.name
         .as_ref()
