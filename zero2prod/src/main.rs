@@ -12,7 +12,7 @@ async fn main() -> std::io::Result<()> {
         .expect("Failed to create connection pool");
     let address = format!("127.0.0.1:{}", configuration.application.port);
     let listener = TcpListener::bind(address)?;
-    let server = run(listener, connection_pool)?;
+    let server = run(listener, connection_pool).expect("Failed to create server");
     let _ = server.await;
     Ok(())
 }

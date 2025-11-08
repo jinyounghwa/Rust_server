@@ -3,7 +3,7 @@
 use std::net::TcpListener;
 use zero2prod::startup::run;
 use zero2prod::configuration::get_configuration;
-use sqlx::{Connection, PgConnection};
+use sqlx::postgres::PgPoolOptions;
 
 async fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0")
@@ -11,11 +11,12 @@ async fn spawn_app() -> String {
     let port = listener.local_addr().unwrap().port();
 
     let configuration = get_configuration().expect("Failed to read configuration");
-    let connection = PgConnection::connect(&configuration.database.connection_string())
+    let connection_pool = PgPoolOptions::new()
+        .connect(&configuration.database.connection_string())
         .await
         .expect("Failed to connect to database");
 
-    let server = run(listener, connection)
+    let server = run(listener, connection_pool)
         .expect("Failed to create server");
 
     let _ = tokio::spawn(async move {
