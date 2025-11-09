@@ -5,6 +5,7 @@ use zero2prod::startup::run;
 use zero2prod::configuration::get_configuration;
 use sqlx::postgres::PgPoolOptions;
 
+
 async fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0")
         .expect("Failed to bind random port");
