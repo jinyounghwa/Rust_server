@@ -13,7 +13,13 @@
       "Bash(cargo install:*)",
       "Bash(docker exec:*)",
       "Bash(del \"C:\\Users\\user\\Documents\\Rust_server\\zero2prod\\src\\lib copy.rs\")",
-      "Bash(cargo test:*)"
+      "Bash(cargo test:*)",
+      "Bash(psql:*)",
+      "Bash(where:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

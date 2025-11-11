@@ -13,8 +13,8 @@ async fn spawn_app() -> String {
 
     let configuration = get_configuration().expect("Failed to read configuration");
     let connection_pool = PgPoolOptions::new()
-        .connect(&configuration.database.connection_string())
-        .await
+        .max_connections(5)
+        .connect_lazy(&configuration.database.connection_string())
         .expect("Failed to connect to database");
 
     let server = run(listener, connection_pool)
