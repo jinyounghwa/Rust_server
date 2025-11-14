@@ -1,5 +1,6 @@
-use actix_web::Responder;
+use actix_web::HttpResponse;
 
-pub async fn health_check() -> impl Responder {
-    "OK"
+pub async fn health_check() -> HttpResponse {
+    tracing::debug!("Health check endpoint called");
+    HttpResponse::Ok().finish()
 }

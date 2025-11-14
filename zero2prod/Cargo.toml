@@ -7,11 +7,16 @@ edition = "2021"
 actix-web = "4"
 tokio = {version = "1", features = ["macros", "rt-multi-thread"]}
 serde = {version = "1", features = ["derive"]}
-sqlx = {version = "0.6", features = ["postgres", "runtime-tokio-native-tls"]}
+sqlx = {version = "0.6", features = ["postgres", "runtime-tokio-native-tls", "uuid", "chrono"]}
 config = "0.13"
 env_logger = "0.11"
 log = "0.4"
 futures = "0.3"
+uuid = { version = "1.18.1", features = ["v4"] }
+chrono = "0.4.42"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter", "fmt"] }
+serde_json = "1.0"
 
 [dev-dependencies]
 reqwest = {version = "0.11", features = ["json"]}

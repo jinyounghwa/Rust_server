@@ -5,10 +5,9 @@ use actix_web::{
 use futures::future::LocalBoxFuture;
 use std::rc::Rc;
 use std::time::Instant;
-use log::info;
 
 /// 커스텀 Logger 미들웨어
-/// HTTP 요청과 응답의 세부 정보를 로깅합니다.
+/// HTTP 요청과 응답의 세부 정보를 구조화된 형식으로 로깅합니다.
 pub struct LoggerMiddleware;
 
 impl<S, B> Transform<S, ServiceRequest> for LoggerMiddleware
@@ -52,11 +51,13 @@ where
         let path = req.path().to_string();
         let query = req.query_string().to_string();
 
-        // 요청 정보 로깅
-        info!("Request started: {} {}", method, path);
-        if !query.is_empty() {
-            info!("Query string: {}", query);
-        }
+        // 요청 정보 로깅 - 구조화된 형식
+        tracing::info!(
+            method = %method,
+            path = %path,
+            query = %query,
+            "HTTP request received"
+        );
 
         let service = self.service.clone();
 
@@ -65,14 +66,16 @@ where
 
             let elapsed = start_time.elapsed();
             let status = res.status();
+            let status_code = status.as_u16();
+            let elapsed_ms = elapsed.as_millis();
 
-            // 응답 정보 로깅
-            info!(
-                "Request completed: {} {} - Status: {} ({}ms)",
-                method,
-                path,
-                status.as_u16(),
-                elapsed.as_millis()
+            // 응답 정보 로깅 - 구조화된 형식
+            tracing::info!(
+                method = %method,
+                path = %path,
+                status = status_code,
+                elapsed_ms = elapsed_ms,
+                "HTTP request completed"
             );
 
             Ok(res)

@@ -1,23 +1,61 @@
 use std::net::TcpListener;
 use zero2prod::configuration::get_configuration;
 use zero2prod::startup::run;
+use zero2prod::telemetry::init_telemetry;
 use sqlx::postgres::PgPoolOptions;
-use sqlx::PgPool;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    // 환경 로거 초기화
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    // 구조화된 로깅 초기화
+    init_telemetry();
 
-    let configuration = get_configuration().expect("Failed to read configuration");
-    let connection_pool: PgPool = PgPoolOptions::new()
+    tracing::info!("Starting application");
+
+    // 설정 로드
+    let configuration = match get_configuration() {
+        Ok(config) => {
+            tracing::info!("Configuration loaded successfully");
+            config
+        }
+        Err(e) => {
+            tracing::error!("Failed to read configuration: {}", e);
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Configuration error"
+            ));
+        }
+    };
+
+    // 데이터베이스 연결 풀 생성
+    let connection_string = configuration.database.connection_string();
+    tracing::info!("Attempting to connect to database");
+
+    let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(&configuration.database.connection_string())
+        .connect(&connection_string)
         .await
-        .expect("Failed to create connection pool");
+        .map_err(|e| {
+            tracing::error!("Failed to create connection pool: {}", e);
+            std::io::Error::new(
+                std::io::ErrorKind::ConnectionRefused,
+                "Database connection error"
+            )
+        })?;
+
+    tracing::info!("Database connection pool created successfully");
+
+    // 서버 주소 설정
     let address = format!("127.0.0.1:{}", configuration.application.port);
-    let listener = TcpListener::bind(address)?;
-    let server = run(listener, connection_pool).expect("Failed to create server");
+    tracing::info!("Binding server to address: {}", address);
+
+    let listener = TcpListener::bind(&address)?;
+    tracing::info!("Server listening on: {}", address);
+
+    // 서버 실행
+    let server = run(listener, pool)?;
+    tracing::info!("Server started successfully");
+
     let _ = server.await;
+
     Ok(())
-}
+}   
