@@ -3,6 +3,7 @@ use chrono::Utc;
 use serde::Deserialize;
 use sqlx::PgPool;
 use uuid::Uuid;
+use crate::validators::{is_valid_email, is_valid_name};
 
 #[derive(Deserialize)]
 pub struct FormData {
@@ -10,44 +11,48 @@ pub struct FormData {
     email: Option<String>,
 }
 
-/// Email validation helper function
-fn is_valid_email(email: &str) -> bool {
-    let trimmed = email.trim();
-    !trimmed.is_empty() && trimmed.contains('@') && trimmed.len() > 5
-}
-
 pub async fn subscribe(
     form: web::Form<FormData>,
     pool: web::Data<PgPool>,
 ) -> HttpResponse {
-    // Name validation: check if not empty after trimming
-    let name_valid = form.name
-        .as_ref()
-        .map(|n| !n.trim().is_empty())
-        .unwrap_or(false);
+    // Name validation with comprehensive security checks
+    let name = match form.name.as_ref() {
+        Some(n) => match is_valid_name(n) {
+            Ok(validated) => validated,
+            Err(e) => {
+                tracing::warn!(
+                    error = %e,
+                    "Invalid name received in subscription request"
+                );
+                return HttpResponse::BadRequest().finish();
+            }
+        },
+        None => {
+            tracing::warn!("Missing name in subscription request");
+            return HttpResponse::BadRequest().finish();
+        }
+    };
 
-    // Email validation: format check
-    let email_valid = form.email
-        .as_ref()
-        .map(|e| is_valid_email(e))
-        .unwrap_or(false);
-
-    if !name_valid || !email_valid {
-        tracing::warn!(
-            name_valid = name_valid,
-            email_valid = email_valid,
-            "Invalid subscription request received"
-        );
-        return HttpResponse::BadRequest().finish();
-    }
-
-    let name = form.name.as_ref().unwrap().trim();
-    let email = form.email.as_ref().unwrap().trim();
+    // Email validation with comprehensive security checks
+    let email = match form.email.as_ref() {
+        Some(e) => match is_valid_email(e) {
+            Ok(validated) => validated,
+            Err(err) => {
+                tracing::warn!(
+                    error = %err,
+                    "Invalid email received in subscription request"
+                );
+                return HttpResponse::BadRequest().finish();
+            }
+        },
+        None => {
+            tracing::warn!("Missing email in subscription request");
+            return HttpResponse::BadRequest().finish();
+        }
+    };
 
     tracing::info!(
-        email = %email,
-        name = %name,
-        "Processing new subscription"
+        "Processing new subscription (sensitive data redacted)"
     );
 
     let subscriber_id = Uuid::new_v4();
@@ -56,8 +61,8 @@ pub async fn subscribe(
         "INSERT INTO subscriptions (id, email, name, subscribed_at) VALUES ($1, $2, $3, $4)"
     )
     .bind(subscriber_id)
-    .bind(email)
-    .bind(name)
+    .bind(&email)
+    .bind(&name)
     .bind(Utc::now())
     .execute(pool.get_ref())
     .await
@@ -65,15 +70,25 @@ pub async fn subscribe(
         Ok(_) => {
             tracing::info!(
                 subscriber_id = %subscriber_id,
-                email = %email,
                 "New subscriber saved successfully"
             );
             HttpResponse::Ok().finish()
         }
         Err(e) => {
+            // Handle specific database errors
+            let error_message = e.to_string();
+
+            // Check for unique constraint violation (duplicate email)
+            if error_message.contains("duplicate key") || error_message.contains("unique") {
+                tracing::warn!(
+                    subscriber_id = %subscriber_id,
+                    "Duplicate email subscription attempt"
+                );
+                return HttpResponse::Conflict().finish();
+            }
+
             tracing::error!(
                 subscriber_id = %subscriber_id,
-                email = %email,
                 error = %e,
                 "Failed to save subscriber to database"
             );
