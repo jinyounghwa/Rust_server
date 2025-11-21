@@ -1,8 +1,10 @@
 mod health_check;
 mod subscriptions;
+mod confirmation;
 
 pub use health_check::health_check;
 pub use subscriptions::subscribe;
+pub use confirmation::confirm_subscription;
 
 // greet 함수를 직접 정의
 use actix_web::Responder;

@@ -5,3 +5,5 @@ pub mod startup;
 pub mod telemetry;
 pub mod validators;
 pub mod security;
+pub mod email_client;
+pub mod confirmation_token;

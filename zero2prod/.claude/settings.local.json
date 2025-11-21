@@ -19,7 +19,8 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(dir /B C:UsersuserDocumentsRust_serverzero2prod)"
     ],
     "deny": [],
     "ask": []
