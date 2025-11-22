@@ -1,4 +1,5 @@
 use crate::validators::is_valid_email;
+use crate::error::EmailError;
 use serde::Serialize;
 
 #[derive(Clone)]
@@ -12,8 +13,11 @@ pub struct EmailClient {
 pub struct ConfirmedSubscriber(String);
 
 impl ConfirmedSubscriber {
-    pub fn parse(s: String) -> Result<Self, String> {
-        let email = is_valid_email(&s).map_err(|e| format!("{:?}", e))?;
+    pub fn parse(s: String) -> Result<Self, EmailError> {
+        let email = is_valid_email(&s)
+            .map_err(|_| EmailError::InvalidRecipient(
+                "Invalid sender email address".to_string()
+            ))?;
         Ok(Self(email))
     }
 
@@ -49,7 +53,13 @@ impl EmailClient {
         recipient: &str,
         subject: &str,
         html_content: &str,
-    ) -> Result<(), String> {
+    ) -> Result<(), EmailError> {
+        // Validate recipient email
+        is_valid_email(recipient)
+            .map_err(|_| EmailError::InvalidRecipient(
+                format!("Invalid recipient email: {}", recipient)
+            ))?;
+
         let url = format!("{}/email", self.base_url);
         let request = SendEmailRequest {
             to: recipient.to_string(),
@@ -57,19 +67,29 @@ impl EmailClient {
             html: html_content.to_string(),
         };
 
-        self.http_client
+        let response = self.http_client
             .post(&url)
             .json(&request)
             .send()
             .await
             .map_err(|e| {
-                tracing::error!("Failed to send email: {}", e);
-                format!("Failed to send email: {}", e)
-            })?
+                tracing::error!("Failed to send email request: {}", e);
+                EmailError::SendFailed(format!("HTTP request failed: {}", e))
+            })?;
+
+        response
             .error_for_status()
             .map_err(|e| {
-                tracing::error!("Email service returned error: {}", e);
-                format!("Email service error: {}", e)
+                let status = e.status().map(|s| s.as_u16()).unwrap_or(0);
+                if status == 503 || status == 502 || status == 504 {
+                    tracing::error!("Email service unavailable: {}", e);
+                    EmailError::ServiceUnavailable(
+                        format!("Email service returned status {}", status)
+                    )
+                } else {
+                    tracing::error!("Email service returned error: {}", e);
+                    EmailError::SendFailed(format!("Email service error: {}", e))
+                }
             })?;
 
         Ok(())
@@ -92,5 +112,11 @@ mod tests {
         let email = "invalid-email".to_string();
         let subscriber = ConfirmedSubscriber::parse(email);
         assert!(subscriber.is_err());
+
+        // Verify error type
+        match subscriber {
+            Err(EmailError::InvalidRecipient(_)) => (),
+            _ => panic!("Expected InvalidRecipient error"),
+        }
     }
 }

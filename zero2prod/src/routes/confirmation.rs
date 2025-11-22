@@ -1,6 +1,7 @@
 use actix_web::{web, HttpResponse};
 use serde::Deserialize;
 use sqlx::PgPool;
+use crate::error::{AppError, DatabaseError, ErrorContext};
 
 #[derive(Deserialize)]
 pub struct ConfirmationQuery {
@@ -10,60 +11,39 @@ pub struct ConfirmationQuery {
 pub async fn confirm_subscription(
     query: web::Query<ConfirmationQuery>,
     pool: web::Data<PgPool>,
-) -> HttpResponse {
+) -> Result<HttpResponse, AppError> {
+    let error_context = ErrorContext::new("subscription_confirmation");
     let token = &query.token;
 
-    // Check if token is valid and exists
-    match get_subscriber_id_from_token(pool.get_ref(), token).await {
-        Ok(Some(subscriber_id)) => {
-            // Update subscription status to confirmed
-            match update_subscription_status(pool.get_ref(), &subscriber_id, "confirmed").await {
-                Ok(_) => {
-                    tracing::info!(
-                        subscriber_id = %subscriber_id,
-                        "Subscription confirmed successfully"
-                    );
-                    HttpResponse::Ok().json(serde_json::json!({
-                        "message": "Thank you for confirming your subscription!"
-                    }))
-                }
-                Err(e) => {
-                    tracing::error!(
-                        subscriber_id = %subscriber_id,
-                        error = %e,
-                        "Failed to update subscription status"
-                    );
-                    HttpResponse::InternalServerError().json(serde_json::json!({
-                        "error": "Failed to confirm subscription"
-                    }))
-                }
-            }
-        }
-        Ok(None) => {
-            tracing::warn!(
-                token = %token,
-                "Invalid or expired confirmation token"
-            );
-            HttpResponse::BadRequest().json(serde_json::json!({
-                "error": "Invalid or expired confirmation token"
-            }))
-        }
-        Err(e) => {
-            tracing::error!(
-                error = %e,
-                "Database error while confirming subscription"
-            );
-            HttpResponse::InternalServerError().json(serde_json::json!({
-                "error": "Failed to confirm subscription"
-            }))
-        }
-    }
+    tracing::info!(
+        request_id = %error_context.request_id,
+        token = %token,
+        "Processing subscription confirmation"
+    );
+
+    // Get subscriber ID from token
+    let subscriber_id = get_subscriber_id_from_token(pool.get_ref(), token, &error_context).await?;
+
+    // Update subscription status to confirmed
+    update_subscription_status(pool.get_ref(), &subscriber_id, "confirmed", &error_context).await?;
+
+    tracing::info!(
+        request_id = %error_context.request_id,
+        subscriber_id = %subscriber_id,
+        "Subscription confirmed successfully"
+    );
+
+    Ok(HttpResponse::Ok().json(serde_json::json!({
+        "message": "Thank you for confirming your subscription!",
+        "request_id": error_context.request_id
+    })))
 }
 
 async fn get_subscriber_id_from_token(
     pool: &PgPool,
     token: &str,
-) -> Result<Option<String>, sqlx::Error> {
+    context: &ErrorContext,
+) -> Result<String, AppError> {
     let result = sqlx::query_as::<_, (String,)>(
         r#"
         SELECT subscriber_id
@@ -74,16 +54,31 @@ async fn get_subscriber_id_from_token(
     )
     .bind(token)
     .fetch_optional(pool)
-    .await?;
+    .await
+    .map_err(|e| {
+        let error = AppError::from(e);
+        context.log_error(&error);
+        error
+    })?;
 
-    Ok(result.map(|(id,)| id))
+    result.map(|(id,)| id).ok_or_else(|| {
+        let error = AppError::Database(DatabaseError::NotFound(
+            "Invalid or expired confirmation token".to_string()
+        ));
+        tracing::warn!(
+            request_id = %context.request_id,
+            "Invalid or expired confirmation token"
+        );
+        error
+    })
 }
 
 async fn update_subscription_status(
     pool: &PgPool,
     subscriber_id: &str,
     status: &str,
-) -> Result<(), sqlx::Error> {
+    context: &ErrorContext,
+) -> Result<(), AppError> {
     sqlx::query(
         r#"
         UPDATE subscriptions
@@ -94,7 +89,12 @@ async fn update_subscription_status(
     .bind(status)
     .bind(subscriber_id)
     .execute(pool)
-    .await?;
+    .await
+    .map_err(|e| {
+        let error = AppError::from(e);
+        context.log_error(&error);
+        error
+    })?;
 
     // Delete the token after successful confirmation
     sqlx::query(
@@ -105,7 +105,12 @@ async fn update_subscription_status(
     )
     .bind(subscriber_id)
     .execute(pool)
-    .await?;
+    .await
+    .map_err(|e| {
+        let error = AppError::from(e);
+        context.log_error(&error);
+        error
+    })?;
 
     Ok(())
 }

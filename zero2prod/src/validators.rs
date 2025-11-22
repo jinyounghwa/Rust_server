@@ -7,6 +7,7 @@
 
 use regex::Regex;
 use lazy_static::lazy_static;
+use crate::error::ValidationError;
 
 const MAX_EMAIL_LENGTH: usize = 254; // RFC 5321
 const MAX_NAME_LENGTH: usize = 256;  // Custom limit as per requirements
@@ -45,25 +46,25 @@ pub fn is_valid_email(email: &str) -> Result<String, ValidationError> {
 
     // Length validation - prevent DoS attacks with extremely long inputs
     if trimmed.is_empty() {
-        return Err(ValidationError::EmptyField("email"));
+        return Err(ValidationError::EmptyField("email".to_string()));
     }
 
     if trimmed.len() < MIN_EMAIL_LENGTH {
-        return Err(ValidationError::TooShort("email", MIN_EMAIL_LENGTH));
+        return Err(ValidationError::TooShort("email".to_string(), MIN_EMAIL_LENGTH));
     }
 
     if trimmed.len() > MAX_EMAIL_LENGTH {
-        return Err(ValidationError::TooLong("email", MAX_EMAIL_LENGTH));
+        return Err(ValidationError::TooLong("email".to_string(), MAX_EMAIL_LENGTH));
     }
 
     // Format validation - RFC 5322 simplified
     if !EMAIL_REGEX.is_match(trimmed) {
-        return Err(ValidationError::InvalidFormat("email"));
+        return Err(ValidationError::InvalidFormat("email".to_string()));
     }
 
     // Check for suspicious patterns (phishing protection)
     if has_suspicious_email_patterns(trimmed) {
-        return Err(ValidationError::SuspiciousContent("email"));
+        return Err(ValidationError::SuspiciousContent("email".to_string()));
     }
 
     // Check for SQL injection patterns in email
@@ -83,20 +84,20 @@ pub fn is_valid_name(name: &str) -> Result<String, ValidationError> {
 
     // Length validation - prevent DoS attacks
     if trimmed.is_empty() {
-        return Err(ValidationError::EmptyField("name"));
+        return Err(ValidationError::EmptyField("name".to_string()));
     }
 
     if trimmed.len() < MIN_NAME_LENGTH {
-        return Err(ValidationError::TooShort("name", MIN_NAME_LENGTH));
+        return Err(ValidationError::TooShort("name".to_string(), MIN_NAME_LENGTH));
     }
 
     if trimmed.len() > MAX_NAME_LENGTH {
-        return Err(ValidationError::TooLong("name", MAX_NAME_LENGTH));
+        return Err(ValidationError::TooLong("name".to_string(), MAX_NAME_LENGTH));
     }
 
     // Check for control characters and suspicious content
     if has_suspicious_name_patterns(trimmed) {
-        return Err(ValidationError::SuspiciousContent("name"));
+        return Err(ValidationError::SuspiciousContent("name".to_string()));
     }
 
     // Check for SQL injection patterns
@@ -160,28 +161,6 @@ fn contains_sql_injection_patterns(input: &str) -> bool {
     SQL_INJECTION_PATTERNS.iter().any(|pattern| pattern.is_match(input))
 }
 
-#[derive(Debug)]
-pub enum ValidationError {
-    EmptyField(&'static str),
-    TooShort(&'static str, usize),
-    TooLong(&'static str, usize),
-    InvalidFormat(&'static str),
-    SuspiciousContent(&'static str),
-    PossibleSQLInjection,
-}
-
-impl std::fmt::Display for ValidationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ValidationError::EmptyField(field) => write!(f, "{} is empty", field),
-            ValidationError::TooShort(field, min) => write!(f, "{} is too short (minimum {} characters)", field, min),
-            ValidationError::TooLong(field, max) => write!(f, "{} is too long (maximum {} characters)", field, max),
-            ValidationError::InvalidFormat(field) => write!(f, "{} has invalid format", field),
-            ValidationError::SuspiciousContent(field) => write!(f, "{} contains suspicious content", field),
-            ValidationError::PossibleSQLInjection => write!(f, "input contains potentially dangerous SQL patterns"),
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -207,7 +186,11 @@ mod tests {
         let too_long = format!("{}@example.com", "a".repeat(250));
         assert!(is_valid_email(&too_long).is_err());
 
-        assert!(is_valid_email("a@a.com").is_err()); // Too short
+        // Test valid short email
+        assert!(is_valid_email("a@a.com").is_ok());
+
+        // Test too short email (below MIN_EMAIL_LENGTH of 5)
+        assert!(is_valid_email("a@b").is_err());
     }
 
     #[test]
