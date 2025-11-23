@@ -23,7 +23,13 @@
       "Bash(dir /B C:UsersuserDocumentsRust_serverzero2prod)",
       "Bash(dir:*)",
       "Bash(powershell \"Get-ChildItem -Name *.md | Select-String -Pattern ''(REQUEST_LOGGING_SUMMARY|IMPLEMENTATION_COMPLETE)''\")",
-      "Bash(powershell \"Get-ChildItem -Name *.md | Select-String -Pattern ''(ERROR_HANDLING|REQUEST_FAILURE|DOCUMENTATION_INDEX)''\")"
+      "Bash(powershell \"Get-ChildItem -Name *.md | Select-String -Pattern ''(ERROR_HANDLING|REQUEST_FAILURE|DOCUMENTATION_INDEX)''\")",
+      "Bash(mcp list:*)",
+      "Bash(mcp --help:*)",
+      "Bash(mcp install:*)",
+      "Bash(npm install:*)",
+      "Bash(powershell:*)",
+      "Bash(git clone:*)"
     ],
     "deny": [],
     "ask": []

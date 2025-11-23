@@ -78,6 +78,19 @@
 
 ## 📖 기능별 상세 문서 (Feature Documentation)
 
+### 뉴스레터 및 데이터 검증 (Newsletter & Data Validation) - 2024-11-23
+
+| 문서 | 설명 |
+|------|------|
+| **[NEWSLETTER_FEATURE.md](./NEWSLETTER_FEATURE.md)** | 뉴스레터 기능 (모든 구독자, 확인된 구독자에게 이메일 발송) |
+| **[DATA_VALIDATION_GUIDE.md](./DATA_VALIDATION_GUIDE.md)** | 데이터 검증 시스템 (입력 검증, 저장된 데이터 검증) |
+
+**구현된 기능:**
+- ✅ 모든 구독자에게 이메일 발송 (`POST /newsletters/send-all`)
+- ✅ 확인된 구독자만에게 이메일 발송 (`POST /newsletters/send-confirmed`)
+- ✅ 저장된 데이터 자동 검증 (UUID, 이메일, 이름, 상태)
+- ✅ 검증 실패 시 감사 로그 기록
+
 ### 보안 (Security)
 
 | 문서 | 설명 |
@@ -176,6 +189,26 @@
 ---
 
 ## 📊 구현 현황 (Implementation Status)
+
+### ✅ 완료된 구현 (2024-11-23 업데이트)
+
+#### Phase 3: 뉴스레터 및 데이터 검증 시스템
+- ✅ 모든 구독자에게 이메일 발송 기능
+- ✅ 확인된 구독자만에게 이메일 발송 기능
+- ✅ 저장된 데이터 자동 검증
+- ✅ UUID, 이메일, 이름, 상태 검증
+- ✅ 검증 실패 시 감사 로그 기록
+
+**구현 파일:**
+- `src/routes/newsletters.rs` (380+ 줄)
+- `src/data_validation.rs` (300+ 줄)
+- `src/routes/mod.rs` (수정)
+- `src/startup.rs` (수정)
+- `src/lib.rs` (수정)
+
+**문서:**
+- `docs/NEWSLETTER_FEATURE.md` (완전한 설명)
+- `docs/DATA_VALIDATION_GUIDE.md` (상세 가이드)
 
 ### ✅ 완료된 구현 (2024-11-22)
 

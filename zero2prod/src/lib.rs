@@ -9,3 +9,4 @@ pub mod email_client;
 pub mod confirmation_token;
 pub mod error;
 pub mod request_logging;
+pub mod data_validation;
