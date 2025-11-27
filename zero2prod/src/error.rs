@@ -120,6 +120,30 @@ impl fmt::Display for ConfigError {
 
 impl StdError for ConfigError {}
 
+/// Authentication and authorization errors
+#[derive(Debug)]
+pub enum AuthError {
+    InvalidCredentials,
+    TokenExpired,
+    TokenInvalid,
+    MissingToken,
+    AccountInactive,
+}
+
+impl fmt::Display for AuthError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AuthError::InvalidCredentials => write!(f, "Invalid credentials"),
+            AuthError::TokenExpired => write!(f, "Token has expired"),
+            AuthError::TokenInvalid => write!(f, "Invalid token"),
+            AuthError::MissingToken => write!(f, "Missing authentication token"),
+            AuthError::AccountInactive => write!(f, "Account is inactive"),
+        }
+    }
+}
+
+impl StdError for AuthError {}
+
 /// ============================================================================
 /// 2. UNIFIED APPLICATION ERROR TYPE
 /// ============================================================================
@@ -131,6 +155,7 @@ pub enum AppError {
     Validation(ValidationError),
     Database(DatabaseError),
     Email(EmailError),
+    Auth(AuthError),
     Config(ConfigError),
     Internal(String),
 }
@@ -141,6 +166,7 @@ impl fmt::Display for AppError {
             AppError::Validation(e) => write!(f, "{}", e),
             AppError::Database(e) => write!(f, "{}", e),
             AppError::Email(e) => write!(f, "{}", e),
+            AppError::Auth(e) => write!(f, "{}", e),
             AppError::Config(e) => write!(f, "{}", e),
             AppError::Internal(msg) => write!(f, "Internal error: {}", msg),
         }
@@ -168,6 +194,12 @@ impl From<DatabaseError> for AppError {
 impl From<EmailError> for AppError {
     fn from(err: EmailError) -> Self {
         AppError::Email(err)
+    }
+}
+
+impl From<AuthError> for AppError {
+    fn from(err: AuthError) -> Self {
+        AppError::Auth(err)
     }
 }
 
@@ -288,6 +320,30 @@ impl ErrorHandler for AppError {
                 "Email service temporarily unavailable".to_string(),
             ),
 
+            // Authentication errors -> 401 Unauthorized or 403 Forbidden
+            AppError::Auth(e) => match e {
+                AuthError::InvalidCredentials => (
+                    StatusCode::UNAUTHORIZED,
+                    "INVALID_CREDENTIALS".to_string(),
+                    "Invalid credentials".to_string(),
+                ),
+                AuthError::TokenExpired | AuthError::TokenInvalid => (
+                    StatusCode::UNAUTHORIZED,
+                    "TOKEN_INVALID".to_string(),
+                    "Invalid or expired token".to_string(),
+                ),
+                AuthError::MissingToken => (
+                    StatusCode::UNAUTHORIZED,
+                    "MISSING_TOKEN".to_string(),
+                    "Missing authentication token".to_string(),
+                ),
+                AuthError::AccountInactive => (
+                    StatusCode::FORBIDDEN,
+                    "ACCOUNT_INACTIVE".to_string(),
+                    "Account is inactive".to_string(),
+                ),
+            },
+
             // Config errors -> 500 Internal Server Error
             AppError::Config(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -343,6 +399,24 @@ impl ErrorHandler for AppError {
                     "Email service error"
                 );
             }
+            AppError::Auth(e) => {
+                match e {
+                    AuthError::InvalidCredentials => {
+                        tracing::warn!(
+                            request_id = request_id,
+                            error = %e,
+                            "Invalid credentials attempt"
+                        );
+                    }
+                    _ => {
+                        tracing::warn!(
+                            request_id = request_id,
+                            error = %e,
+                            "Authentication error"
+                        );
+                    }
+                }
+            }
             AppError::Config(e) => {
                 tracing::error!(
                     request_id = request_id,
@@ -382,6 +456,10 @@ impl ResponseError for AppError {
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             },
             AppError::Email(_) => StatusCode::SERVICE_UNAVAILABLE,
+            AppError::Auth(e) => match e {
+                AuthError::AccountInactive => StatusCode::FORBIDDEN,
+                _ => StatusCode::UNAUTHORIZED,
+            },
             AppError::Config(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
@@ -475,6 +553,13 @@ impl ErrorContext {
                     error = %error,
                     context = ?context,
                     "Email error"
+                );
+            }
+            AppError::Auth(_) => {
+                tracing::warn!(
+                    error = %error,
+                    context = ?context,
+                    "Authentication error"
                 );
             }
             AppError::Config(_) => {

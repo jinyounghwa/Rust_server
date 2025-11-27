@@ -1,0 +1,107 @@
+{
+  "project": "zero2prod",
+  "last_updated": "2025-11-27T00:00:00Z",
+  "test_framework": {
+    "runner": "cargo test",
+    "language": "Rust",
+    "async_runtime": "Tokio"
+  },
+  "test_suites": {
+    "unit_tests": {
+      "status": "passing",
+      "count": 12,
+      "description": "Validator, security, and utility function tests",
+      "last_run": "2025-11-27",
+      "files": [
+        "src/validators.rs",
+        "src/security.rs",
+        "src/email_client.rs",
+        "src/confirmation_token.rs"
+      ]
+    },
+    "integration_tests": {
+      "status": "passing",
+      "count": 17,
+      "description": "API endpoint and workflow integration tests",
+      "last_run": "2025-11-27",
+      "test_files": [
+        "tests/health_check.rs",
+        "tests/email_confirmation_integration.rs"
+      ],
+      "key_tests": [
+        "health_check_works",
+        "subscribe_returns_200_for_valid_data",
+        "subscribe_returns_400_for_missing_data",
+        "subscribe_returns_400_for_invalid_email",
+        "subscribe_returns_409_for_duplicate_email",
+        "email_confirmation_workflow",
+        "newsletter_delivery_to_confirmed",
+        "sql_injection_detection",
+        "rate_limiting"
+      ]
+    }
+  },
+  "coverage": {
+    "target_percentage": 80,
+    "current_percentage": null,
+    "note": "Run 'cargo tarpaulin' to generate coverage reports",
+    "status": "not_measured"
+  },
+  "critical_paths": [
+    {
+      "name": "Email Subscription Workflow",
+      "modules": ["routes/subscriptions.rs", "validators.rs", "email_client.rs"],
+      "tests": ["subscribe_returns_200_for_valid_data", "email_confirmation_workflow"],
+      "priority": "critical"
+    },
+    {
+      "name": "Newsletter Delivery",
+      "modules": ["routes/newsletters.rs", "data_validation.rs"],
+      "tests": ["newsletter_delivery_to_confirmed"],
+      "priority": "critical"
+    },
+    {
+      "name": "Security Validation",
+      "modules": ["security.rs", "validators.rs", "data_validation.rs"],
+      "tests": ["sql_injection_detection", "rate_limiting"],
+      "priority": "critical"
+    },
+    {
+      "name": "Health Check",
+      "modules": ["routes/health_check.rs"],
+      "tests": ["health_check_works"],
+      "priority": "high"
+    }
+  ],
+  "test_commands": {
+    "run_all": "cargo test",
+    "run_integration": "cargo test --test '*'",
+    "run_unit": "cargo test --lib",
+    "run_with_output": "cargo test -- --nocapture --test-threads=1",
+    "run_specific": "cargo test test_name",
+    "coverage": "cargo tarpaulin --out Html"
+  },
+  "known_issues": [],
+  "dependencies_for_testing": {
+    "reqwest": "HTTP client for integration tests",
+    "tokio": "Async runtime for test execution",
+    "sqlx": "Database access in tests"
+  },
+  "next_improvements": [
+    {
+      "task": "Add code coverage reporting",
+      "priority": "medium",
+      "estimated_effort": "30 minutes"
+    },
+    {
+      "task": "Add load testing benchmarks",
+      "priority": "low",
+      "estimated_effort": "2 hours"
+    },
+    {
+      "task": "Add property-based testing with proptest",
+      "priority": "low",
+      "estimated_effort": "1 hour"
+    }
+  ]
+}

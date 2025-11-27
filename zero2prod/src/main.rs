@@ -51,8 +51,11 @@ async fn main() -> std::io::Result<()> {
     let listener = TcpListener::bind(&address)?;
     tracing::info!("Server listening on: {}", address);
 
+    // JWT 설정 저장
+    let jwt_config = configuration.jwt.clone();
+
     // 서버 실행
-    let server = run(listener, pool)?;
+    let server = run(listener, pool, jwt_config)?;
     tracing::info!("Server started successfully");
 
     let _ = server.await;

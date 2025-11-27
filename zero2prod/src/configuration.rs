@@ -4,6 +4,7 @@ use config::ConfigError;
 pub struct Settings {
     pub database: DatabaseSettings,
     pub application: ApplicationSettings,
+    pub jwt: JwtSettings,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -34,6 +35,15 @@ impl DatabaseSettings {
             self.username, self.password, self.host, self.port
         )
     }
+}
+
+/// JWT authentication settings
+#[derive(serde::Deserialize, Clone)]
+pub struct JwtSettings {
+    pub secret: String,
+    pub access_token_expiry: i64,   // seconds (e.g., 900 for 15 minutes)
+    pub refresh_token_expiry: i64,  // seconds (e.g., 604800 for 7 days)
+    pub issuer: String,
 }
 
 pub fn get_configuration() -> Result<Settings, ConfigError> {

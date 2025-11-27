@@ -7,3 +7,9 @@ database:
   port: 5432
   host: localhost
   database_name: zero2prod
+
+jwt:
+  secret: "your-secret-key-min-32-chars-use-env-var-in-production"
+  access_token_expiry: 900        # 15 minutes
+  refresh_token_expiry: 604800    # 7 days
+  issuer: "zero2prod"

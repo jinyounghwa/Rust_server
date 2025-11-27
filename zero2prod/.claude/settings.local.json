@@ -29,7 +29,13 @@
       "Bash(mcp install:*)",
       "Bash(npm install:*)",
       "Bash(powershell:*)",
-      "Bash(git clone:*)"
+      "Bash(git clone:*)",
+      "WebFetch(domain:platform.claude.com)",
+      "Bash(cat:*)",
+      "Bash(git rm:*)",
+      "Bash(sqlx migrate:*)",
+      "Bash(set DATABASE_URL=postgres://postgres:password@localhost:5432/zero2prod)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
