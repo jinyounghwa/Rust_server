@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대시보드 - Zero2Prod</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="navbar">
+            <div class="navbar-content">
+                <h1 class="logo">Zero2Prod</h1>
+                <button id="logout-btn" class="btn btn-secondary">로그아웃</button>
+            </div>
+        </nav>
+
+        <main class="dashboard-main">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>사용자 정보</h2>
+                    <span class="status-badge">활성</span>
+                </div>
+
+                <div class="user-info" id="user-info">
+                    <div class="info-loading">
+                        <span class="spinner"></span>
+                        <p>사용자 정보를 불러오는 중...</p>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <p class="text-muted">JWT 인증으로 보호된 페이지입니다.</p>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>인증 정보</h2>
+                </div>
+
+                <div class="auth-info">
+                    <div class="info-row">
+                        <span class="info-label">액세스 토큰</span>
+                        <span class="info-value" id="token-status">유효</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">토큰 만료</span>
+                        <span class="info-value" id="token-expiry">15분</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">자동 갱신</span>
+                        <span class="info-value">활성화</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>API 테스트</h2>
+                </div>
+
+                <div class="api-test">
+                    <button id="test-api-btn" class="btn btn-primary">
+                        <span class="btn-text">보호된 엔드포인트 테스트</span>
+                    </button>
+                    <div id="api-result" class="api-result"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 알림 메시지 -->
+        <div id="alert-container"></div>
+
+        <!-- 배경 애니메이션 -->
+        <div class="background-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+    </div>
+
+    <script src="/dashboard.js"></script>
+</body>
+</html>

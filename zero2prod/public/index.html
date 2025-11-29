@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 - Zero2Prod</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1 class="logo">Zero2Prod</h1>
+                <p class="subtitle">안전하고 빠른 인증 시스템</p>
+            </div>
+
+            <!-- 로그인 폼 -->
+            <div id="loginForm" class="form-container active">
+                <h2>로그인</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">이메일</label>
+                        <input 
+                            type="email" 
+                            id="login-email" 
+                            name="email" 
+                            placeholder="your@email.com"
+                            required
+                            autocomplete="email"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password">비밀번호</label>
+                        <input 
+                            type="password" 
+                            id="login-password" 
+                            name="password" 
+                            placeholder="••••••••"
+                            required
+                            autocomplete="current-password"
+                        >
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="login-btn">
+                            <span class="btn-text">로그인</span>
+                            <span class="btn-loader" style="display: none;">
+                                <span class="spinner"></span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="form-footer">
+                        <p>계정이 없으신가요? <a href="#" id="show-register">회원가입</a></p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 회원가입 폼 -->
+            <div id="registerForm" class="form-container">
+                <h2>회원가입</h2>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-name">이름</label>
+                        <input 
+                            type="text" 
+                            id="register-name" 
+                            name="name" 
+                            placeholder="홍길동"
+                            required
+                            autocomplete="name"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-email">이메일</label>
+                        <input 
+                            type="email" 
+                            id="register-email" 
+                            name="email" 
+                            placeholder="your@email.com"
+                            required
+                            autocomplete="email"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-password">비밀번호</label>
+                        <input 
+                            type="password" 
+                            id="register-password" 
+                            name="password" 
+                            placeholder="••••••••"
+                            required
+                            autocomplete="new-password"
+                        >
+                        <small class="form-hint">8자 이상, 대문자, 소문자, 숫자 포함</small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="register-btn">
+                            <span class="btn-text">회원가입</span>
+                            <span class="btn-loader" style="display: none;">
+                                <span class="spinner"></span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="form-footer">
+                        <p>이미 계정이 있으신가요? <a href="#" id="show-login">로그인</a></p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 알림 메시지 -->
+            <div id="alert-container"></div>
+        </div>
+
+        <!-- 배경 애니메이션 -->
+        <div class="background-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>

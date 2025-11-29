@@ -1,4 +1,5 @@
 use actix_web::{middleware::Logger, web, App, HttpServer};
+use actix_files as fs;
 use sqlx::PgPool;
 use std::net::TcpListener;
 use actix_web::dev::Server;
@@ -37,14 +38,18 @@ pub fn run(
 
             // Protected routes (require JWT authentication)
             .service(
-                web::scope("")
+                web::scope("/api")
                     .wrap(JwtMiddleware::new(jwt_config.clone()))
-                    .route("/auth/me", web::get().to(get_current_user))
-                    .route("/subscriptions", web::post().to(subscribe))
-                    .route("/subscriptions/confirm", web::get().to(confirm_subscription))
-                    .route("/newsletters/send-all", web::post().to(send_newsletter_to_all))
-                    .route("/newsletters/send-confirmed", web::post().to(send_newsletter_to_confirmed))
+                    .route("/me", web::get().to(get_current_user))
             )
+            .route("/auth/me", web::get().to(get_current_user))
+            .route("/subscriptions", web::post().to(subscribe))
+            .route("/subscriptions/confirm", web::get().to(confirm_subscription))
+            .route("/newsletters/send-all", web::post().to(send_newsletter_to_all))
+            .route("/newsletters/send-confirmed", web::post().to(send_newsletter_to_confirmed))
+            
+            // Static file serving (must be last to not override API routes)
+            .service(fs::Files::new("/", "./public").index_file("index.html"))
     })
     .listen(listener)?
     .run();
